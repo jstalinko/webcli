@@ -40,11 +40,22 @@
 
 ## 🚀 Quick Start
 
-### 1. Prerequisites
+### ⚡ Automated Installation (Recommended for VPS & Docker)
+WebCLI includes an interactive automated installer that configures your domain, Nginx reverse proxy, WebSocket forwarding, SSL (Certbot), and choice of Docker or bare-metal VPS:
+
+```bash
+sudo ./install.sh
+```
+
+---
+
+### Manual Setup
+
+#### 1. Prerequisites
 - **Node.js**: v20+
 - **Linux Tools**: `bash`, `gcc`, `g++`, `make`, `python3` (for `node-pty` native compilation)
 
-### 2. Installation
+#### 2. Manual Installation
 ```bash
 # Clone the repository and install root & client dependencies
 npm install
