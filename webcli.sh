@@ -8,9 +8,12 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-if [ ! -d "node_modules" ]; then
-  echo "[WEBCLI] Installing dependencies first..."
-  npm install
+if [ -f "$SCRIPT_DIR/dist/server/src/cli.js" ]; then
+  exec node "$SCRIPT_DIR/dist/server/src/cli.js" "$@"
+else
+  if [ ! -d "node_modules" ]; then
+    echo "[WEBCLI] Installing dependencies first..."
+    npm install
+  fi
+  exec npx tsx "$SCRIPT_DIR/server/src/cli.ts" "$@"
 fi
-
-exec npx tsx "$SCRIPT_DIR/server/src/cli.ts" "$@"

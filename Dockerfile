@@ -63,9 +63,11 @@ COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/client/dist ./client/dist
+COPY --from=builder /app/webcli.sh ./webcli.sh
 
 # Create storage directories and set ownership
 RUN mkdir -p /app/data /app/workspaces && \
+    chmod +x /app/webcli.sh && \
     chown -R webcli:webcli /app
 
 # Switch to isolated user
