@@ -768,3 +768,24 @@ textarea,
   background: rgba(176, 38, 255, 0.16);
   color: #ffffff;
 }
+
+/* ==========================================================================
+   SELECTION STYLES: PURPLE NEON CYBERDARK
+   ========================================================================== */
+::selection {
+  background: rgba(176, 38, 255, 0.45);
+  color: #ffffff;
+}
+
+::-moz-selection {
+  background: rgba(176, 38, 255, 0.45);
+  color: #ffffff;
+}
+
+.monaco-editor .selected-text {
+  background-color: rgba(176, 38, 255, 0.4) !important;
+}
+
+.monaco-editor.focused .selected-text {
+  background-color: rgba(176, 38, 255, 0.45) !important;
+}

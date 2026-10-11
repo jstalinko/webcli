@@ -34,11 +34,15 @@ export const EditorWorkspace: React.FC<EditorWorkspaceProps> = ({ onCursorChange
         'editor.background': '#07040f',
         'editor.foreground': '#f3e8ff',
         'editorCursor.foreground': '#b026ff',
-        'editor.lineHighlightBackground': 'rgba(176, 38, 255, 0.08)',
+        'editor.lineHighlightBackground': '#b026ff14',
         'editorLineNumber.foreground': '#584473',
         'editorLineNumber.activeForeground': '#b026ff',
-        'editor.selectionBackground': 'rgba(176, 38, 255, 0.35)',
-        'editor.inactiveSelectionBackground': 'rgba(176, 38, 255, 0.18)',
+        'editor.selectionBackground': '#b026ff59',
+        'editor.inactiveSelectionBackground': '#b026ff2e',
+        'editor.selectionHighlightBackground': '#b026ff33',
+        'editor.wordHighlightBackground': '#b026ff33',
+        'editor.wordHighlightStrongBackground': '#b026ff55',
+        'editor.findMatchHighlightBackground': '#b026ff66',
       },
     });
   };
