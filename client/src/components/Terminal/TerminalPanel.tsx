@@ -108,6 +108,7 @@ export const TerminalPanel: React.FC = () => {
             <TerminalView
               key={tab.id}
               sessionId={tab.id}
+              title={tab.title}
               isActive={tab.id === activeTabId}
               clearTrigger={clearEmitter}
             />

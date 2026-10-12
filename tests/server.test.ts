@@ -345,5 +345,90 @@ describe('WEBCLI Backend Integration Test Suite', () => {
       // Cleanup
       PtyService.closeSession(sessionId, user1Id);
     });
+
+    it('should keep background command running when browser disconnects and replay buffered output upon reattaching', async () => {
+      const sessionId = `persist_pty_${Date.now()}`;
+      let firstListenerData = '';
+
+      // 1. Initial connection (browser open)
+      PtyService.createSession(
+        sessionId,
+        user1WorkspaceId,
+        user1Id,
+        user1WorkspaceRoot,
+        80,
+        24,
+        (data) => {
+          firstListenerData += data;
+        },
+        () => {},
+        'browser_tab_1',
+        'bash (1)'
+      );
+
+      // Run initial command
+      PtyService.writeToSession(sessionId, user1Id, 'echo "STEP1_BEFORE_CLOSE"\n');
+      await new Promise((r) => setTimeout(r, 600));
+      expect(firstListenerData).toContain('STEP1_BEFORE_CLOSE');
+
+      // 2. Simulate browser close: detach listener
+      PtyService.detachListener(sessionId, 'browser_tab_1');
+
+      // Command continues running in background while browser is closed!
+      PtyService.writeToSession(sessionId, user1Id, 'echo "STEP2_RUNNING_IN_BACKGROUND"\n');
+      await new Promise((r) => setTimeout(r, 600));
+
+      // 3. Verify session is still active in workspace session list
+      const activeSessions = PtyService.listSessions(user1WorkspaceId, user1Id);
+      const foundSession = activeSessions.find((s) => s.id === sessionId);
+      expect(foundSession).toBeDefined();
+      expect(foundSession?.title).toBe('bash (1)');
+
+      // 4. Simulate user logging in again and reopening site: attach new listener
+      let reconnectedData = '';
+      PtyService.createSession(
+        sessionId,
+        user1WorkspaceId,
+        user1Id,
+        user1WorkspaceRoot,
+        80,
+        24,
+        (data) => {
+          reconnectedData += data;
+        },
+        () => {},
+        'browser_tab_reconnected'
+      );
+
+      // The reconnected terminal MUST receive buffered history including background output!
+      expect(reconnectedData).toContain('STEP1_BEFORE_CLOSE');
+      expect(reconnectedData).toContain('STEP2_RUNNING_IN_BACKGROUND');
+
+      // 5. Subsequent live output continues streaming to reconnected terminal
+      PtyService.writeToSession(sessionId, user1Id, 'echo "STEP3_LIVE_CONTINUATION"\n');
+      await new Promise((r) => setTimeout(r, 600));
+      expect(reconnectedData).toContain('STEP3_LIVE_CONTINUATION');
+
+      // 6. Test GET /api/workspaces/:workspaceId/terminals endpoint
+      const listRes = await request(app)
+        .get(`/api/workspaces/${user1WorkspaceId}/terminals`)
+        .set('Authorization', `Bearer ${user1Token}`);
+
+      expect(listRes.status).toBe(200);
+      expect(listRes.body.sessions).toBeDefined();
+      expect(listRes.body.sessions.some((s: any) => s.id === sessionId)).toBe(true);
+
+      // 7. Explicitly terminate session via DELETE endpoint
+      const delRes = await request(app)
+        .delete(`/api/workspaces/${user1WorkspaceId}/terminals/${sessionId}`)
+        .set('Authorization', `Bearer ${user1Token}`);
+
+      expect(delRes.status).toBe(200);
+      expect(delRes.body.closed).toBe(true);
+
+      // Verify session is now closed
+      const postDelSessions = PtyService.listSessions(user1WorkspaceId, user1Id);
+      expect(postDelSessions.some((s) => s.id === sessionId)).toBe(false);
+    });
   });
 });

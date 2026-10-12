@@ -8,11 +8,12 @@ import { useWorkspace } from '../../context/WorkspaceContext';
 
 interface TerminalViewProps {
   sessionId: string;
+  title?: string;
   isActive: boolean;
   clearTrigger: number;
 }
 
-export const TerminalView: React.FC<TerminalViewProps> = ({ sessionId, isActive, clearTrigger }) => {
+export const TerminalView: React.FC<TerminalViewProps> = ({ sessionId, title, isActive, clearTrigger }) => {
   const { currentWorkspace } = useWorkspace();
   const terminalRef = useRef<HTMLDivElement>(null);
   const termInstanceRef = useRef<Terminal | null>(null);
@@ -84,6 +85,7 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ sessionId, isActive,
           workspaceId: currentWorkspace.id,
           cols: term.cols,
           rows: term.rows,
+          title,
         })
       );
     };
@@ -154,12 +156,11 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ sessionId, isActive,
       resizeObserver.disconnect();
       window.removeEventListener('resize', handleFit);
       if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'terminal_close', sessionId }));
         ws.close();
       }
       term.dispose();
     };
-  }, [sessionId, currentWorkspace]);
+  }, [sessionId, currentWorkspace, title]);
 
   // Refit when tab becomes active
   useEffect(() => {

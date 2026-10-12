@@ -21,14 +21,15 @@ services:
       - webcli-data:/app/data
       - webcli-workspaces:/app/workspaces
     # Resource constraints for container isolation
+    # NOTE: must be <= host CPUs (fails on 1-CPU hosts if set to 2.0)
     deploy:
       resources:
         limits:
-          cpus: '2.0'
-          memory: 2048M
+          cpus: '0.90'
+          memory: 1024M
         reservations:
-          cpus: '0.5'
-          memory: 512M
+          cpus: '0.25'
+          memory: 256M
 
 volumes:
   webcli-data:

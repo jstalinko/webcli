@@ -164,10 +164,23 @@ class ApiClient {
   }
 
   // Terminal Endpoints
+  async getTerminalSessions(workspaceId: string): Promise<{ sessions: { id: string; title: string; createdAt: string }[] }> {
+    return this.request<{ sessions: { id: string; title: string; createdAt: string }[] }>(
+      `/workspaces/${workspaceId}/terminals`
+    );
+  }
+
   async createTerminalSession(workspaceId: string): Promise<{ sessionId: string }> {
     return this.request<{ sessionId: string }>(`/workspaces/${workspaceId}/terminals`, {
       method: 'POST',
     });
+  }
+
+  async deleteTerminalSession(workspaceId: string, sessionId: string): Promise<{ closed: boolean; sessionId: string }> {
+    return this.request<{ closed: boolean; sessionId: string }>(
+      `/workspaces/${workspaceId}/terminals/${sessionId}`,
+      { method: 'DELETE' }
+    );
   }
 }
 

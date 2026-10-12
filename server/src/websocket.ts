@@ -68,6 +68,8 @@ export function setupWebSocketServer(httpServer: HttpServer) {
   wss.on('connection', (ws: AuthenticatedWebSocket) => {
     const user = ws.user!;
     const unsubscribeFns: (() => void)[] = [];
+    const attachedSessions = new Set<string>();
+    const connectionId = crypto.randomUUID();
 
     ws.on('pong', () => {
       ws.isAlive = true;
@@ -79,7 +81,7 @@ export function setupWebSocketServer(httpServer: HttpServer) {
 
         switch (msg.type) {
           case 'terminal_init': {
-            const { sessionId, workspaceId, cols, rows } = msg;
+            const { sessionId, workspaceId, cols, rows, title } = msg;
             if (!sessionId || !workspaceId) return;
 
             const workspace = WorkspaceService.getWorkspace(workspaceId, user.id);
@@ -90,6 +92,8 @@ export function setupWebSocketServer(httpServer: HttpServer) {
               }));
               return;
             }
+
+            attachedSessions.add(sessionId);
 
             // Create or bind real PTY session
             PtyService.createSession(
@@ -116,7 +120,9 @@ export function setupWebSocketServer(httpServer: HttpServer) {
                     code,
                   }));
                 }
-              }
+              },
+              connectionId,
+              title
             );
 
             ws.send(JSON.stringify({
@@ -143,10 +149,21 @@ export function setupWebSocketServer(httpServer: HttpServer) {
             break;
           }
 
+          case 'terminal_destroy':
           case 'terminal_close': {
             const { sessionId } = msg;
             if (sessionId) {
+              attachedSessions.delete(sessionId);
               PtyService.closeSession(sessionId, user.id);
+            }
+            break;
+          }
+
+          case 'terminal_detach': {
+            const { sessionId } = msg;
+            if (sessionId) {
+              attachedSessions.delete(sessionId);
+              PtyService.detachListener(sessionId, connectionId);
             }
             break;
           }
@@ -189,6 +206,10 @@ export function setupWebSocketServer(httpServer: HttpServer) {
     });
 
     ws.on('close', () => {
+      // Detach listeners from terminal sessions WITHOUT killing background PTY processes
+      for (const sessionId of attachedSessions) {
+        PtyService.detachListener(sessionId, connectionId);
+      }
       // Clean up subscriptions
       for (const unsub of unsubscribeFns) {
         unsub();
